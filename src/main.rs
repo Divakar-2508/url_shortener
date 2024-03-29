@@ -1,20 +1,18 @@
 pub mod db;
 
 use rocket::form::Form;
-use rocket::http::{Header, Status};
+use rocket::http::Header;
 use rocket::serde::{Deserialize, Serialize};
-use rocket::{get, launch, post, routes, FromForm, Request, Rocket, State};
-use rocket::response::{Responder, Response};
+use rocket::{get, launch, post, routes, FromForm, Rocket, State};
+use rocket::response::Responder;
 use db::DBManager;
 
-enum UrlResponseState {
-    Found,
-    NotFound
-}
-
-struct UrlResponse {
-    state: UrlResponseState,
-    data: Option<String>
+#[derive(Responder)]
+enum UrlResponse {
+    #[response(status = 301)] 
+    Found((), Header<'static>),
+    #[response(status = 404)] 
+    NotFound(()),
 }
 
 #[derive(Serialize, Deserialize, FromForm)]
@@ -24,42 +22,14 @@ struct UrlData {
     target_url: String
 }
 
-#[get("/")]
-async fn hello_world() -> String {
-    "Hello world".to_string()
-}
-
-impl<'r> Responder<'r, 'r> for UrlResponse {
-    fn respond_to(self, _: &'r Request<'_>) -> rocket::response::Result<'r> {
-        match self.state {
-            UrlResponseState::Found => {
-                Ok(Response::build()
-                    .status(Status::new(301))
-                    .header(Header::new("Location", self.data.unwrap())) // Convert target_url to a String
-                    .finalize()
-                )
-            },
-            UrlResponseState::NotFound => {
-                Err(Status::NotFound)
-            }
-        }
-    }
-}
-
 #[get("/<short_url>")]
 async fn get_target_url(short_url: &str, db: &State<DBManager>) -> UrlResponse {
     let result = db.get_entry(short_url).await;
     
     if let Err(_) = result {
-        return UrlResponse {
-            state: UrlResponseState::NotFound,
-            data: None,
-        }
+        return UrlResponse::NotFound(())
     } else {
-        return UrlResponse {
-            state: UrlResponseState::Found,
-            data: result.ok()
-        }
+        return UrlResponse::Found((), Header::new("Location", result.unwrap()))
     }
 }
 
@@ -86,5 +56,5 @@ async fn launch() -> _ {
     Rocket::build()
         .manage(db)
         .attach(cors)
-        .mount("/", routes![hello_world, get_target_url, register_urls])
+        .mount("/", routes![get_target_url, register_urls])
 }
