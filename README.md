@@ -1,11 +1,19 @@
-A simple and Efficient Url Shortener made with Rust-powered rocket framework.
+Title:
 
-How to Use it?
--> Make Sure to get the latest version of rust
--> clone the repository, and run:
--> 'cargo run' for debug builds and 'cargo run --release' for optimised builds
+    Simple and Efficient URL Shortener with Rocket (Clearer and highlights framework)
 
-Dependecies:
-Following Dependencies are used in the project but doesnt require for any external downloads by the user.
+Description:
 
--> Sqlite (for local database)
+    A lightweight and easy-to-use URL shortener built with Rust's blazing-fast Rocket framework. (Emphasizes both speed and ease of use)
+
+How to Use:
+
+    Prerequisites: Ensure you have the latest version of Rust installed. You can check by running rustc --version in your terminal. Install it from https://www.rust-lang.org/tools/install if needed.
+    Clone the Repository: Clone this project using Git: git clone https://github.com/Divakar-2508/url_shortener.
+    Run the Project:
+        Debug Build: Navigate to the project directory and run cargo run.
+        Optimized Build: For production use, run cargo run --release.
+
+Dependencies:
+
+    Sqlite: This project utilizes Sqlite for a local database, but no external downloads are required for users.
