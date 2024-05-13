@@ -1,10 +1,10 @@
 Title:
 
-    Simple and Efficient URL Shortener with Rocket (Clearer and highlights framework)
-
+    Simple and Efficient URL Shortener with Rocket.
+    
 Description:
 
-    A lightweight and easy-to-use URL shortener built with Rust's blazing-fast Rocket framework. (Emphasizes both speed and ease of use)
+    A lightweight and easy-to-use URL shortener built with Rust's blazing-fast Rocket framework.
 
 How to Use:
 
