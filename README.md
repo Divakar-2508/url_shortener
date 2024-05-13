@@ -17,3 +17,7 @@ How to Use:
 Dependencies:
 
     Sqlite: This project utilizes Sqlite for a local database, but no external downloads are required for users.
+
+Demo Video:
+
+    https://drive.google.com/file/d/1fxllwrSAUgwN89jA3u2Ca5yvpAYh2koY/view?usp=sharing
