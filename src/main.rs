@@ -12,7 +12,7 @@ enum UrlResponse {
     #[response(status = 301)] 
     Found((), Header<'static>),
     #[response(status = 404)] 
-    NotFound(()),
+    NotFound(String),
 }
 
 #[derive(Serialize, Deserialize, FromForm)]
@@ -25,9 +25,9 @@ struct UrlData {
 #[get("/<short_url>")]
 async fn get_target_url(short_url: &str, db: &State<DBManager>) -> UrlResponse {
     let result = db.get_entry(short_url).await;
-    
+    // delete_url(&db).await;
     if let Err(_) = result {
-        return UrlResponse::NotFound(())
+        return UrlResponse::NotFound("Requested Url Not Found".to_string())
     } else {
         return UrlResponse::Found((), Header::new("Location", result.unwrap()))
     }
@@ -36,7 +36,7 @@ async fn get_target_url(short_url: &str, db: &State<DBManager>) -> UrlResponse {
 #[post("/add", data="<url_data>")]
 async fn register_urls(url_data: Form<UrlData>, db: &State<DBManager>) -> String {
     let data = url_data.into_inner();
-
+    // delete_url(&db).await;
     let result = db.add_entry(&data.short_url, &data.target_url).await;
 
     if let Err(err) = result {
@@ -44,6 +44,10 @@ async fn register_urls(url_data: Form<UrlData>, db: &State<DBManager>) -> String
     } else {
         result.unwrap()
     }
+}
+
+async fn _delete_url(db: &State<DBManager>) {
+    db.delete_entries(5).await;   
 }
 
 #[launch]

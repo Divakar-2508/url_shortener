@@ -66,17 +66,17 @@ impl DBManager {
         }
     }
 
-    pub async fn delete_entry(&self, short_url: &str) -> Result<String, String> {
-        const DELETE_QUERY: &str = "DELETE FROM urls WHERE short_url = $1";
+    pub async fn delete_entries(&self, interval: usize) -> Option<String> {
+        const DELETE_QUERY: &str = "DELETE FROM urls WHERE DATEDIFF(date_created, DATE('now'), date_created) > $1";
 
         let result = sqlx::query(DELETE_QUERY)
-            .bind(short_url)
+            .bind(interval.to_string())
             .execute(&self.pool).await.unwrap();
 
         if result.rows_affected() == 0 {
-            Err("No Entry with the given url found".to_string())
+            None
         } else {
-            Ok("Entry Deleted Successfully".to_string())
+            Some(format!("{} entries deleted from database", result.rows_affected(   )))
         }
     } 
 }
