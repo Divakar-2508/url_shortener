@@ -1,64 +1,41 @@
-pub mod db;
+mod database;
+mod handlers;
+mod models;
 
-use rocket::form::Form;
-use rocket::http::Header;
-use rocket::serde::{Deserialize, Serialize};
-use rocket::{get, launch, post, routes, FromForm, Rocket, State};
-use rocket::response::Responder;
-use db::DBManager;
+use std::io;
+use std::sync::Arc;
 
-#[derive(Responder)]
-enum UrlResponse {
-    #[response(status = 301)] 
-    Found((), Header<'static>),
-    #[response(status = 404)] 
-    NotFound(String),
-}
+use axum::http::Method;
+use axum::routing::{get, post};
+use axum::Router;
+use database::ShortBase;
+use handlers::{delete_url_data, get_url_data, shorten_url, update_url_data};
+use tokio::net::TcpListener;
+use tokio::sync::Mutex;
+use tower_http::cors::{Any, CorsLayer};
 
-#[derive(Serialize, Deserialize, FromForm)]
-#[serde(crate="rocket::serde")]
-struct UrlData {
-    short_url: String,
-    target_url: String
-}
-
-#[get("/<short_url>")]
-async fn get_target_url(short_url: &str, db: &State<DBManager>) -> UrlResponse {
-    let result = db.get_entry(short_url).await;
-    // delete_url(&db).await;
-    if let Err(_) = result {
-        return UrlResponse::NotFound("Requested Url Not Found".to_string())
-    } else {
-        return UrlResponse::Found((), Header::new("Location", result.unwrap()))
-    }
-}
-
-#[post("/add", data="<url_data>")]
-async fn register_urls(url_data: Form<UrlData>, db: &State<DBManager>) -> String {
-    let data = url_data.into_inner();
-    // delete_url(&db).await;
-    let result = db.add_entry(&data.short_url, &data.target_url).await;
-
-    if let Err(err) = result {
-        err
-    } else {
-        result.unwrap()
-    }
-}
-
-async fn _delete_url(db: &State<DBManager>) {
-    db.delete_entries(5).await;   
-}
-
-#[launch]
 #[tokio::main]
-async fn launch() -> _ {
-    let db = DBManager::new().await.unwrap();
-  
-    let cors = rocket_cors::CorsOptions::default().to_cors().unwrap();
+async fn main() -> io::Result<()> {
+    let state = Arc::new(Mutex::new(ShortBase::new()));
 
-    Rocket::build()
-        .manage(db)
-        .attach(cors)
-        .mount("/", routes![get_target_url, register_urls])
+    let app = Router::new()
+        .route("/shorten", post(shorten_url))
+        .route(
+            "/shorten/:short_code",
+            get(get_url_data)
+                .put(update_url_data)
+                .delete(delete_url_data),
+        )
+        .layer(
+            CorsLayer::new()
+                .allow_methods(vec![Method::GET, Method::POST, Method::PUT, Method::DELETE])
+                .allow_origin(Any),
+        )
+        .with_state(state);
+
+    let listener = TcpListener::bind("localhost:3000").await?;
+
+    axum::serve(listener, app).await?;
+
+    Ok(())
 }
